@@ -1,0 +1,104 @@
+package Rasterization;
+
+import java.awt.Color;
+
+public class Triangle {
+    public Vector3[] points = new Vector3[3];
+    public Vector2[] texturePoints; 
+    public Color c;
+    public double shade;
+    Triangle(Vector3 a, Vector3 b, Vector3 c, Vector2 ta, Vector2 tb, Vector2 tc, Color color, double shade){
+        points[0]=a;
+        points[1]=b;
+        points[2]=c;
+        texturePoints = new Vector2[3];
+        texturePoints[0]=ta;
+        texturePoints[1]=tb;
+        texturePoints[2]=tc;
+        this.c=color;
+        this.shade=shade;
+    }
+    Triangle(Vector3 a, Vector3 b, Vector3 c, Color color, double shade){
+        points[0]=a;
+        points[1]=b;
+        points[2]=c;
+        this.c=color;
+        this.shade=shade;
+    }
+    Triangle(Vector3 a, Vector3 b, Vector3 c, Color color){
+        this(a,b,c,color,0);
+    }
+    Triangle(Vector3 a, Vector3 b, Vector3 c, Vector2 ta, Vector2 tb, Vector2 tc){
+        this(a,b,c,ta,tb,tc,null,0);
+    }
+    Triangle(Triangle trig, Color c){
+        this(trig.points[0],trig.points[1],trig.points[2],trig.c);
+    }
+    Triangle(Triangle trig){
+        this(trig.points[0],trig.points[1],trig.points[2],trig.texturePoints[0],trig.texturePoints[1],trig.texturePoints[2]);
+    }
+    Triangle(Vector3 a, Vector3 b, Vector3 c){
+        this(a,b,c,null);
+    }
+    Triangle(){
+        this(new Vector3(),new Vector3(),new Vector3(),null);
+    }
+    
+    boolean seen(){
+        if (points[0].x>points[0].w && points[1].x>points[1].w && points[2].x>points[2].w)
+            return false;
+        if (points[0].x<-points[0].w && points[1].x<-points[1].w && points[2].x<-points[2].w)
+            return false;
+        if (points[0].y>points[0].w && points[1].y>points[1].w && points[2].y>points[2].w)
+            return false;
+        if (points[0].y<-points[0].w && points[1].y<-points[1].w && points[2].y<-points[2].w)
+            return false;
+        if (points[0].z>points[0].w && points[1].z>points[1].w && points[2].z>points[2].w)
+            return false;
+        if (points[0].z<0 && points[1].z<0 && points[2].z<0)
+            return false;
+        return true;
+    }
+    
+    void move(double x,double y,double z){
+        for(int j=0;j<3;j++){
+            points[j].x+=x;  
+            points[j].y+=y;  
+            points[j].z+=z;            
+        }
+    }
+    void divide(){
+        for (int j=0;j<3;j++){
+            points[j].divide();              
+        }
+    }
+    void rotate(Matrix4 rotationMat){
+        for (int j=0;j<3;j++){
+            points[j]=points[j].MatMultiply(rotationMat);              
+        }
+    }     
+    void rotate(Matrix4 rotationMatX,Matrix4 rotationMatY,Matrix4 rotationMatZ){
+        rotate(rotationMatX);
+        rotate(rotationMatY);
+        rotate(rotationMatZ);
+    }
+    void shade(double shade){
+        this.shade=shade;
+    }
+    Color getColor() {
+        if (c!=null){
+            int red = (int) Math.round(Math.max(0, c.getRed() - 255 * shade));
+            int green = (int) Math.round(Math.max(0, c.getGreen() - 255 * shade));
+            int blue = (int) Math.round(Math.max(0, c.getBlue() - 255 * shade));
+            return new Color(red,green,blue);
+        }
+        return null;
+    }    
+    Vector3 findMidpoint(){
+        Vector3 midpoint=new Vector3();
+        midpoint.x=(points[0].x+points[1].x+points[2].x)/3;
+        midpoint.y=(points[0].y+points[1].y+points[2].y)/3;
+        midpoint.z=(points[0].z+points[1].z+points[2].z)/3;
+        return midpoint;
+    }
+}

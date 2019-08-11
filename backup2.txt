@@ -1,0 +1,127 @@
+package Rasterization;
+
+import java.io.File;
+import java.util.Scanner;
+import java.io.FileNotFoundException;
+import java.awt.Color;
+
+// remake with vertex list and triangle list
+public class Object {
+    public Vector[] vertices;
+    public int[][] trigVertices;
+    
+    public Triangle[] trigs;
+    public Matrix4 orientation;
+    public Vector position;
+    public double rotateSpeed=0.05;
+    Object(Vector position){
+        this.position=position;
+        orientation=Matrix4.identity();
+    }
+    Object(Triangle[] trigs){
+        this.trigs=trigs;
+    }
+    Object(double[][] trigs){
+        this.trigs = new Triangle[trigs.length];
+        for(int i=0;i<trigs.length;i++){
+            this.trigs[i] = new Triangle(trigs[i]);
+        }
+    }
+    Object(String filename, Color color) throws FileNotFoundException{
+        File file = new File(filename);
+        Scanner s = new Scanner(file); 
+        int vs=0, fs=0;
+        String c;
+        while(s.hasNextLine()){
+            c=s.nextLine().split(" ")[0];
+            if(c.equals("v"))
+                vs++;
+            else if(c.equals("f"))
+                fs++;            
+        }
+        vertices=new Vector[vs];
+        trigs=new Triangle[fs];
+        System.out.println(fs);
+        int vi=0,ti=0;
+        String[] line;
+        s = new Scanner(file); 
+        while(s.hasNextLine()){
+            line=s.nextLine().split(" ");
+            if(line[0].equals("v")){
+                vertices[vi++]=new Vector(Double.parseDouble(line[1]),Double.parseDouble(line[2]),
+                        Double.parseDouble(line[3]));
+            }else if(line[0].equals("f")){
+                trigs[ti++]=new Triangle(vertices[Integer.parseInt(line[1])-1],
+                                         vertices[Integer.parseInt(line[2])-1],
+                                         vertices[Integer.parseInt(line[3])-1],
+                                         color);
+                
+            }
+        }
+    }
+    Object(Object obj){
+        this.trigs = new Triangle[obj.trigs.length];
+        System.arraycopy(obj.trigs, 0, this.trigs, 0, obj.trigs.length);
+    }
+    
+    void initialize(double x, double y, double z){
+        position=new Vector(x,y,z);
+        orientation=Matrix4.identity();
+    }
+    void rotate(int x,int y,int z){
+        orientation=(Matrix4.getRotationMatX(x*rotateSpeed)).
+                multiply(Matrix4.getRotationMatY(y*rotateSpeed)).
+                multiply(Matrix4.getRotationMatZ(z*rotateSpeed)).multiply(orientation);
+    }
+    
+    void move(int x,int y,int z){
+        position.x+=x;
+        position.y+=y;
+        position.z+=z;
+    }
+    void move(Vector v){
+        position.x+=v.x;
+        position.y+=v.y;
+        position.z+=v.z;
+    }
+    
+    Vector findMean(){
+        Vector mean=new Vector();
+        double sumX=0,sumY=0,sumZ=0;
+        int num=trigs.length;
+        for (int i=0;i<num;i++){
+            Vector midpoint=trigs[i].findMidpoint();
+            sumX+=midpoint.x;
+            sumY+=midpoint.y;
+            sumZ+=midpoint.z;
+        }
+        mean.x=sumX/num;
+        mean.y=sumY/num;
+        mean.z=sumZ/num;
+        return mean;
+    }
+    
+    
+    static Object getCube(){
+        double[][] cubeTrigs={
+            {0,0,0, 0,1,0, 1,1,0},
+            {0,0,0, 1,1,0, 1,0,0},
+            
+            {1,0,0, 1,1,0, 1,1,1},
+            {1,0,0, 1,1,1, 1,0,1},
+            
+            {1,0,1, 1,1,1, 0,1,1},
+            {1,0,1, 0,1,1, 0,0,1},
+            
+            {0,0,1, 0,1,1, 0,1,0},
+            {0,0,1, 0,1,0, 0,0,0},
+            
+            {0,1,0, 0,1,1, 1,1,1},
+            {0,1,0, 1,1,1, 1,1,0},
+            
+            {1,0,1, 0,0,1, 0,0,0},
+            {1,0,1, 0,0,0, 1,0,0},
+        };
+        return new Object(cubeTrigs); 
+    }
+}
