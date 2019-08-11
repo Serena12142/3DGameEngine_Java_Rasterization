@@ -211,16 +211,21 @@ public class Engine {
         }                
     }
     void trianglePreProcessor(Object object){
+        Triangle triangle;
         for (int i=0;i<object.trigs.length;i++){
-            Triangle triangle=new Triangle(object.trigs[i]);
+            triangle=new Triangle();
+            TriangleProcessor(triangle);
             for (int j=0;j<3;j++){
-                triangle.points[j]=triangle.points[j].MatMultiply(object.orientation);
+                triangle.points[j]=object.trigs[i].points[j].MatMultiply(object.orientation);
                 triangle.points[j]=triangle.points[j].add(object.position);
                 triangle.points[j]=triangle.points[j].subtract(camera.position);
                 triangle.points[j]=triangle.points[j].MatMultiply(camera.headOrientation.inverse());
-                triangle.c=Color.ORANGE;
-                TriangleProcessor(triangle);
+                
+                
             }
+            triangle.c=Color.ORANGE;
+            TriangleProcessor(triangle);
+            
         }
     }
     void TriangleProcessor(Triangle triangle){    

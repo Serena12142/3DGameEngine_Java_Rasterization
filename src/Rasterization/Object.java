@@ -59,9 +59,8 @@ public class Object {
                 trigVertices[fi][1]=Integer.parseInt(v2[0])-1;
                 trigVertices[fi][2]=Integer.parseInt(v3[0])-1;
                 trigs[fi++]=new Triangle(vertices[Integer.parseInt(v1[0])-1],
-                                         vertices[Integer.parseInt(v1[0])-1],
-                                         vertices[Integer.parseInt(v1[0])-1],
-                                         color);
+                                         vertices[Integer.parseInt(v2[0])-1],
+                                         vertices[Integer.parseInt(v3[0])-1]);
                                
             }
         }
@@ -79,14 +78,15 @@ public class Object {
         }
         orientation = new Matrix4(obj.orientation);
         position = new Vector(obj.position);
+        
         this.trigs = new Triangle[obj.trigs.length];
         System.arraycopy(obj.trigs, 0, this.trigs, 0, obj.trigs.length);
     }
     
     void rotate(int x,int y,int z){
-        orientation=(orientation.multiply(Matrix4.getRotationMatX(x*rotateSpeed)).
+        orientation=(Matrix4.getRotationMatX(x*rotateSpeed)).
                 multiply(Matrix4.getRotationMatY(y*rotateSpeed)).
-                multiply(Matrix4.getRotationMatZ(z*rotateSpeed)));
+                multiply(Matrix4.getRotationMatZ(z*rotateSpeed)).multiply(orientation);
     }
     
     void move(int x,int y,int z){
@@ -100,14 +100,16 @@ public class Object {
         position.z+=v.z;
     }
     
-    void offset(){
+    void offset(double maxAmount){
         Random rand = new Random();
         for (int i=0;i<trigs.length;i++){
-            double n = rand.nextInt(40);
+            double amount = (rand.nextInt((int)(maxAmount*100*2))-20)/(double)100;
+            double alpha = 1-(amount/trigs[i].findMidpoint().add(position).length());
             for (int j=0;j<3;j++){
-                trigs[i].points[j]=new Vector(0,0,0).interpolate(trigs[i].points[j].add(position),n/100+0.8).subtract(position);
+                trigs[i].points[j]=new Vector(0,0,0).interpolate(trigs[i].points[j].add(position),alpha).subtract(position);
             }
-        }          
+        } 
+        rotate(rand.nextInt(50)-25,rand.nextInt(50)-25,rand.nextInt(50)-25);
     }
     
     static Object getCube(){

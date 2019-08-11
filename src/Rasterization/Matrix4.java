@@ -30,6 +30,16 @@ public class Matrix4 {
         return newMat;
     }
     
+    double determinant(){
+        return 0;
+    }
+    double determinant3(){
+        return 0;
+    }
+    
+    double determinant2(double a,double b,double c,double d){
+        return 0;
+    }
     static Matrix4 getProjectionMat(double a,double fov,double zNear,double zFar){
         Matrix4 projectionMat = new Matrix4();
         double fovRad = fov/180*Math.PI;   
