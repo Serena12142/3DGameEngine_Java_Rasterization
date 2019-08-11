@@ -1,9 +1,12 @@
 # 3DGameEngineJava
 
-build a 3d game from scratch using java
+Goal:build a 3d game from scratch using java
 
-following Direct3D's coordinates & rasterization rules
+Notes:
+  following Direct3D's coordinates & rasterization rules
+  handmade functions for vectors/matrix operations
+  NOT optimized
 
-not optimized
-
-references: javidx9, ChiliTomatoNoodle
+References: 
+  javidx9
+  ChiliTomatoNoodle
