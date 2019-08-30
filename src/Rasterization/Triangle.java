@@ -8,9 +8,9 @@ public class Triangle {
     public Color c;
     public double shade; 
     Triangle(Vector a, Vector b, Vector c, Color color){
-        points[0]=a;
-        points[1]=b;
-        points[2]=c;
+        points[0]=new Vector(a);
+        points[1]=new Vector(b);
+        points[2]=new Vector(c);
         this.c=color;
     }
     Triangle(Vector a, Vector b, Vector c){

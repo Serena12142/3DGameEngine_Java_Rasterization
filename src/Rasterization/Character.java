@@ -2,7 +2,7 @@ package Rasterization;
 
 public class Character extends Object{
     public Vector heading,headingLR,headingUD;
-    public double moveSpeed=0.05,rotatespeed=0.05;
+    public double moveSpeed=0.05,rotatespeed=0.01;
     public Matrix4 headOrientation;
     Character(){
         super();

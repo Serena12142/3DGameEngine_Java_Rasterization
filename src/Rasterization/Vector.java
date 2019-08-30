@@ -2,20 +2,23 @@ package Rasterization;
 
 public class Vector {
     public double x, y, z, w;
-    Vector(double x, double y, double z){
+    Vector(double x, double y, double z,double w){
         this.x=x;
         this.y=y;
         this.z=z;
-        w=1;
+        this.w=w;
+    }
+    Vector(double x, double y, double z){
+        this(x,y,z,1);
     }
     Vector(){
-        this(0,0,0);
+        this(0,0,0,1);
     }
     Vector(double[] p){
-        this(p[0],p[1],p[2]);
+        this(p[0],p[1],p[2],1);
     }
     Vector(Vector v){
-        this(v.x,v.y,v.z);
+        this(v.x,v.y,v.z,v.w);
     }
     
     double dot(Vector b){

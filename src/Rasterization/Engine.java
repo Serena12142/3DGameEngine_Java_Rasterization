@@ -30,7 +30,7 @@ public class Engine {
         this.width=width;
         this.height=height;
         //projection matrix inputs: aspect ratio, field of view, z near, z far
-        projectionMat=Matrix4.getProjectionMat((double)height/width,90,1,100);     
+        projectionMat=Matrix4.getProjectionMat((double)height/width,90,0.1,100);     
         //z-buffer
         zBuffer=new Pixel[width][height];
         //object, camera and light
@@ -138,12 +138,12 @@ public class Engine {
         }
 
         moveCharacter(camera);
-        moveObject(objects[0]);        
+        //moveObject(objects[0]);        
         
         //position light to match camera view
-        //lightView=light.subtract(camera.position);            
+        lightViewed=light.subtract(camera.position);            
         //rotate light to match camera view
-        //lightView.MatMultiply(camera.orientation.inverse())
+        lightViewed.MatMultiply(camera.headOrientation.inverse());
         
         draw.repaint();
         return true;
@@ -157,7 +157,7 @@ public class Engine {
             
             for (int i=0;i<objects.length;i++){ 
                 if (objects[i]!=null){
-                    trianglePreProcessor(objects[i]);
+                    vertexProcessor(objects[i]);
                 }
             }
             /*
@@ -210,6 +210,7 @@ public class Engine {
             TriangleProcessor(triangle);
         }                
     }
+    /*
     void trianglePreProcessor(Object object){
         Triangle triangle;
         for (int i=0;i<object.trigs.length;i++){
@@ -228,6 +229,7 @@ public class Engine {
             
         }
     }
+    */
     void TriangleProcessor(Triangle triangle){    
         //backface culling
         //find normal
@@ -244,44 +246,47 @@ public class Engine {
             //clip triangles that are completly out of the NDC box
             if(triangle.seen()){
                 //shade triangle based on amount of light shined
-                //double lightShined=-sight.subtract(lightViewed).dot(normal);
-                double lightShined=-sight.dot(normal); //light comes from character
-                triangle.shade=(1-lightShined);
+                Vector lightOnObject=sight.subtract(lightViewed);
+                lightOnObject.normalize();
+                double lightShined=-lightOnObject.dot(normal);
+                //double lightShined=-sight.dot(normal); //light comes from character
+                triangle.shade=(0.5-lightShined/2);
+                triangle.darken();
+                //triangle.shade=0;
                 //apply clipping to zNear
                 clip(triangle);
             }
         }
 
     }
-    void clip(Triangle triangle){
-        //if the triangle is completly in front of the near plane
-        if(triangle.points[0].z>=0 && triangle.points[1].z>=0 && triangle.points[2].z>=0){
-            trianglePostProcesser(triangle);
-        }else{
-            //one point out of bound: return two triangles
-            if (triangle.points[0].z<0 && triangle.points[1].z>=0 && triangle.points[2].z>=0){
-                clip2(triangle,0,1,2);
-            }else if (triangle.points[1].z<0 && triangle.points[0].z>=0 && triangle.points[2].z>=0){
-                clip2(triangle,1,2,0);
-            }else if (triangle.points[2].z<0 && triangle.points[1].z>=0 && triangle.points[0].z>=0){
-                clip2(triangle,2,0,1);
-            //two points out of bound: return one triangle
-            }else if (triangle.points[0].z<0 && triangle.points[1].z<0 && triangle.points[2].z>=0){
+    void clip(Triangle triangle){       
+        if (triangle.points[0].z<0){
+            if (triangle.points[1].z<0){
                 clip1(triangle,2,0,1);
-            }else if (triangle.points[0].z<0 && triangle.points[2].z<0 && triangle.points[1].z>=0){
-                clip1(triangle,1,2,0);
-            }else if (triangle.points[2].z<0 && triangle.points[1].z<0 && triangle.points[0].z>=0){
-                clip1(triangle,0,1,2);
+            }else if (triangle.points[2].z<0){
+                clip1(triangle,1,0,2);
+            }else{
+                clip2(triangle,0,2,1);
             }
+        }else if (triangle.points[1].z<0){
+            if (triangle.points[2].z<0){
+                clip1(triangle,0,2,1);
+            }else{
+                clip2(triangle,1,2,0);
+            }
+        }else if (triangle.points[2].z<0){
+            clip2(triangle,2,1,0);
+        }else{
+            trianglePostProcesser(triangle);
         }        
     } 
     //first point is in range
     void clip1 (Triangle triangle, int pi1, int pi2, int pi3){
         double alpha1=-triangle.points[pi1].z/(triangle.points[pi2].z-triangle.points[pi1].z);  
         double alpha2=-triangle.points[pi1].z/(triangle.points[pi3].z-triangle.points[pi1].z);    
-        triangle.points[pi2]=triangle.points[pi1].interpolate(triangle.points[pi2],alpha1);
-        triangle.points[pi3]=triangle.points[pi1].interpolate(triangle.points[pi3],alpha2);
-        trianglePostProcesser(triangle);
+        Vector p12=triangle.points[pi1].interpolate(triangle.points[pi2],alpha1);
+        Vector p13=triangle.points[pi1].interpolate(triangle.points[pi3],alpha2);
+        trianglePostProcesser(new Triangle(triangle.points[pi1],p12,p13,triangle.c));
     }
     //first point is out of range
     void clip2 (Triangle triangle, int pi1, int pi2, int pi3){
@@ -289,22 +294,26 @@ public class Engine {
         double alpha2=-triangle.points[pi1].z/(triangle.points[pi3].z-triangle.points[pi1].z);    
         Vector p12=triangle.points[pi1].interpolate(triangle.points[pi2],alpha1);
         Vector p13=triangle.points[pi1].interpolate(triangle.points[pi3],alpha2);
-        trianglePostProcesser(new Triangle(p12,triangle.points[pi2],triangle.points[pi3],triangle.c));
-        trianglePostProcesser(new Triangle(p13,p12,triangle.points[pi3],triangle.c));
+        Vector p2=triangle.points[pi2];
+        Vector p3=triangle.points[pi3]; 
+        Color c=triangle.c;
+
+        trianglePostProcesser(new Triangle(p12,p2,p3,c));
+        trianglePostProcesser(new Triangle(p13,p12,p3,c));
     }   
     void trianglePostProcesser(Triangle triangle){
         //perspective division
         triangle.divide();    
         //screen transform
-        triangle.points[0].x = (double)width/2  + (triangle.points[0].x*width/2);
-        triangle.points[0].y = (double)height/2 - (triangle.points[0].y*height/2);
-        triangle.points[1].x = (double)width/2  + (triangle.points[1].x*width/2);
-        triangle.points[1].y = (double)height/2 - (triangle.points[1].y*height/2);
-        triangle.points[2].x = (double)width/2  + (triangle.points[2].x*width/2);
-        triangle.points[2].y = (double)height/2 - (triangle.points[2].y*height/2);
+        triangle.points[0].x = (triangle.points[0].x+1)*((double)width/2);
+        triangle.points[0].y = (-triangle.points[0].y+1)*((double)height/2);
+        triangle.points[1].x = (triangle.points[1].x+1)*((double)width/2);
+        triangle.points[1].y = (-triangle.points[1].y+1)*((double)height/2);
+        triangle.points[2].x = (triangle.points[2].x+1)*((double)width/2);
+        triangle.points[2].y = (-triangle.points[2].y+1)*((double)height/2);
         //sort by y then x
         Arrays.sort(triangle.points, (a, b) -> a.y==b.y?Double.compare(a.x, b.x):Double.compare(a.y, b.y));
-        triangle.darken();
+        //triangle.darken();
         drawFillTriangle(triangle.points,triangle.c);
     }
     //fill with scanlines
@@ -378,10 +387,6 @@ public class Engine {
         if(zBuffer[x][y]==null || zBuffer[x][y].z<z )
             zBuffer[x][y]=new Pixel(c,z);
     }
-    
-    
-    
-    
     
     class KeyboardListener implements KeyListener{       
         public void keyPressed(KeyEvent e) {          

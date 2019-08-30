@@ -10,7 +10,7 @@ public class Object {
     public Vector[] vertices;
     public int[][] trigVertices;
     
-    public Triangle[] trigs;
+    //public Triangle[] trigs;
     public Matrix4 orientation;
     public Vector position;
     public double rotateSpeed=0.05;
@@ -18,6 +18,7 @@ public class Object {
         this.position=new Vector();
         orientation=Matrix4.identity();
     }
+    /*
     Object(Triangle[] trigs){
         this.trigs=trigs;
     }
@@ -27,7 +28,8 @@ public class Object {
             this.trigs[i] = new Triangle(trigs[i]);
         }
     }
-    Object(String filename, Color color) throws FileNotFoundException{
+    */
+    Object(String filename) throws FileNotFoundException{
         File file = new File(filename);
         Scanner s = new Scanner(file); 
         int vs=0, fs=0;
@@ -41,7 +43,7 @@ public class Object {
         }
         vertices=new Vector[vs];
         trigVertices=new int[fs][3];
-        trigs=new Triangle[fs];
+        //trigs=new Triangle[fs];
         System.out.println(filename+": "+fs);
         int vi=0,fi=0;
         String[] line;
@@ -57,11 +59,12 @@ public class Object {
                 String[] v3=line[3].split("/");
                 trigVertices[fi][0]=Integer.parseInt(v1[0])-1;
                 trigVertices[fi][1]=Integer.parseInt(v2[0])-1;
-                trigVertices[fi][2]=Integer.parseInt(v3[0])-1;
+                trigVertices[fi++][2]=Integer.parseInt(v3[0])-1;
+                /*
                 trigs[fi++]=new Triangle(vertices[Integer.parseInt(v1[0])-1],
-                                         vertices[Integer.parseInt(v2[0])-1],
-                                         vertices[Integer.parseInt(v3[0])-1]);
-                               
+                        vertices[Integer.parseInt(v2[0])-1],
+                        vertices[Integer.parseInt(v3[0])-1]);
+                */
             }
         }
         position=new Vector();
@@ -78,9 +81,12 @@ public class Object {
         }
         orientation = new Matrix4(obj.orientation);
         position = new Vector(obj.position);
-        
-        this.trigs = new Triangle[obj.trigs.length];
-        System.arraycopy(obj.trigs, 0, this.trigs, 0, obj.trigs.length);
+        /*
+        if (obj.trigs!=null){
+            this.trigs = new Triangle[obj.trigs.length];
+            System.arraycopy(obj.trigs, 0, this.trigs, 0, obj.trigs.length);
+        }
+        */
     }
     
     void rotate(int x,int y,int z){
@@ -99,7 +105,7 @@ public class Object {
         position.y+=v.y;
         position.z+=v.z;
     }
-    
+    /*
     void offset(double maxAmount){
         Random rand = new Random();
         for (int i=0;i<trigs.length;i++){
@@ -111,27 +117,36 @@ public class Object {
         } 
         rotate(rand.nextInt(50)-25,rand.nextInt(50)-25,rand.nextInt(50)-25);
     }
+    */
+    void scale(double amount){
+        for (int i=0;i<vertices.length;i++){
+            vertices[i]=vertices[i].multiply(amount);
+        }
+    }
     
-    static Object getCube(){
-        double[][] cubeTrigs={
-            {0,0,0, 0,1,0, 1,1,0},
-            {0,0,0, 1,1,0, 1,0,0},
-            
-            {1,0,0, 1,1,0, 1,1,1},
-            {1,0,0, 1,1,1, 1,0,1},
-            
-            {1,0,1, 1,1,1, 0,1,1},
-            {1,0,1, 0,1,1, 0,0,1},
-            
-            {0,0,1, 0,1,1, 0,1,0},
-            {0,0,1, 0,1,0, 0,0,0},
-            
-            {0,1,0, 0,1,1, 1,1,1},
-            {0,1,0, 1,1,1, 1,1,0},
-            
-            {1,0,1, 0,0,1, 0,0,0},
-            {1,0,1, 0,0,0, 1,0,0},
-        };
-        return new Object(cubeTrigs); 
+    static Object getObj(){
+        Object obj=new Object();
+        obj.vertices=new Vector[11];
+        obj.vertices[0]=new Vector(-5,5,5);
+        obj.vertices[1]=new Vector(5,5,5);
+        obj.vertices[2]=new Vector(5,-5,5);
+        obj.vertices[3]=new Vector(-5,-5,5);
+        obj.vertices[4]=new Vector(-5,5,-5);
+        obj.vertices[5]=new Vector(5,5,-5);
+        obj.vertices[6]=new Vector(5,-5,-5);
+        obj.vertices[7]=new Vector(-5,-5,-5);
+        obj.vertices[8]=new Vector(0,1,0);
+        obj.vertices[9]=new Vector(0,0,1);
+        obj.vertices[10]=new Vector(0,0,-1);
+        obj.trigVertices=new int[1][3];
+        
+        obj.trigVertices[0][0]=8;
+        obj.trigVertices[0][1]=9;
+        obj.trigVertices[0][2]=10;
+        //obj.trigVertices[1][0]=0;
+        //obj.trigVertices[1][1]=2;
+        //obj.trigVertices[1][2]=3;
+ 
+        return obj; 
     }
 }
